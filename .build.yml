@@ -1,0 +1,44 @@
+# CI/CD
+
+image: archlinux
+packages:
+  - rustup
+sources:
+  - https://git.sr.ht/~hadronized/glsl
+tasks:
+  # glsl + glsl-tree
+  - setup: |
+      rustup set profile minimal
+      rustup default stable
+      rustup component add rustfmt clippy
+  - build: |
+      cd glsl
+      cargo build
+  - test: |
+      cd glsl
+      cargo test
+  - build-minimal: |
+      rustup default nightly
+      cd glsl
+      cargo build -Z minimal-versions
+  - test-minimal: |
+      rustup default nightly
+      cd glsl
+      cargo test -Z minimal-versions
+
+	# glsl-quasiquote
+  - glsl-quasiquote-setup: |
+      rustup default nightly
+      rustup component add rustfmt clippy
+  - glsl-quasiquote-build: |
+      cd glsl
+      cargo build
+  - glsl-quasiquote-test: |
+      cd glsl
+      cargo test
+  - glsl-quasiquote-build-minimal: |
+      cd glsl
+      cargo build -Z minimal-versions
+  - glsl-quasiquote-test-minimal: |
+      cd glsl
+      cargo test -Z minimal-versions

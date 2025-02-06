@@ -1,9 +1,14 @@
 [workspace]
+resolver = "2"
 
 members = [
   "glsl",
   "glsl-tree",
   "glsl-quasiquote"
+]
+default-members = [
+  "glsl",
+  "glsl-tree",
 ]
 
 [patch.crates-io]
