@@ -26,7 +26,7 @@ tasks:
       cd glsl
       cargo test -Z minimal-versions
 
-	# glsl-quasiquote
+  # glsl-quasiquote
   - glsl-quasiquote-setup: |
       rustup default nightly
       rustup component add rustfmt clippy
