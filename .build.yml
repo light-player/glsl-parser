@@ -3,6 +3,7 @@
 image: archlinux
 packages:
   - rustup
+  - shaderc # required for feature "spirv"
 sources:
   - https://git.sr.ht/~hadronized/glsl
 tasks:
