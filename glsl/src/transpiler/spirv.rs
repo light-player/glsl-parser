@@ -51,7 +51,7 @@ where
   glsl_transpiler::show_translation_unit(&mut glsl_buffer, tu);
 
   // pass the GLSL-formatted string to shaderc
-  let mut compiler = shaderc::Compiler::new().unwrap();
+  let compiler = shaderc::Compiler::new().unwrap();
   let options = shaderc::CompileOptions::new().unwrap();
   let kind = kind.into();
   let output = compiler
@@ -82,7 +82,7 @@ where
   glsl_transpiler::show_translation_unit(&mut glsl_buffer, tu);
 
   // pass the GLSL-formatted string to shaderc
-  let mut compiler = shaderc::Compiler::new().unwrap();
+  let compiler = shaderc::Compiler::new().unwrap();
   let options = shaderc::CompileOptions::new().unwrap();
   let kind = kind.into();
   let output = compiler
