@@ -15,6 +15,7 @@ edition = "2018"
 
 [features]
 spirv = ["shaderc"]
+bench = []
 
 [dependencies]
 nom = { version = "7", default-features = false, features = ["std"] }

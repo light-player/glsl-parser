@@ -64,8 +64,6 @@ fn parse_integral_lit() {
   assert_eq!(integral_lit("012 "), Ok((" ", 0o12)));
   assert_eq!(integral_lit("0x3 "), Ok((" ", 0x3)));
   assert_eq!(integral_lit("0x9ABCDEF"), Ok(("", 0x9ABCDEF)));
-  assert_eq!(integral_lit("0x9ABCDEF"), Ok(("", 0x9ABCDEF)));
-  assert_eq!(integral_lit("0x9abcdef"), Ok(("", 0x9abcdef)));
   assert_eq!(integral_lit("0x9abcdef"), Ok(("", 0x9abcdef)));
   assert_eq!(integral_lit("0xffffffff"), Ok(("", 0xffffffffu32 as i32)));
 }
@@ -79,8 +77,6 @@ fn parse_integral_neg_lit() {
   assert_eq!(integral_lit("-012 "), Ok((" ", -0o12)));
   assert_eq!(integral_lit("-0x3 "), Ok((" ", -0x3)));
   assert_eq!(integral_lit("-0x9ABCDEF"), Ok(("", -0x9ABCDEF)));
-  assert_eq!(integral_lit("-0x9ABCDEF"), Ok(("", -0x9ABCDEF)));
-  assert_eq!(integral_lit("-0x9abcdef"), Ok(("", -0x9abcdef)));
   assert_eq!(integral_lit("-0x9abcdef"), Ok(("", -0x9abcdef)));
 }
 
@@ -2836,12 +2832,4 @@ fn parse_arrayed_identifier() {
 
   assert_eq!(arrayed_identifier("foo[]"), Ok(("", expected.clone())));
   assert_eq!(arrayed_identifier("foo \t\n  [\n\t ]"), Ok(("", expected)));
-}
-
-#[test]
-fn parse_nested_parens() {
-  let start = std::time::Instant::now();
-  parens_expr("((((((((1.0f))))))))").unwrap();
-  let elapsed = start.elapsed();
-  assert!(elapsed.as_millis() < 100, "{} ms", elapsed.as_millis());
 }

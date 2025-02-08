@@ -14,14 +14,14 @@ tasks:
       rustup component add rustfmt clippy
   - build: |
       cd glsl
-      cargo build --all-features
+      cargo build --features spirv
   - test: |
       cd glsl
-      cargo test --all-features
+      cargo test --features spirv
   - build-minimal: |
       rustup default nightly
       cd glsl
-      cargo build -Z minimal-versions --all-features
+      cargo build -Z minimal-versions --features spirv
   - test-minimal: |
       rustup default nightly
       cd glsl
@@ -33,13 +33,13 @@ tasks:
       rustup component add rustfmt clippy
   - glsl-quasiquote-build: |
       cd glsl
-      cargo build --all-features
+      cargo build --features spirv
   - glsl-quasiquote-test: |
       cd glsl
-      cargo test --all-features
+      cargo test --features spirv
   - glsl-quasiquote-build-minimal: |
       cd glsl
-      cargo build -Z minimal-versions --all-features
+      cargo build -Z minimal-versions --features spirv
   - glsl-quasiquote-test-minimal: |
       cd glsl
-      cargo test -Z minimal-versions --all-features
+      cargo test -Z minimal-versions --features spirv

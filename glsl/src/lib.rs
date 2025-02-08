@@ -116,6 +116,13 @@
 //! [`Expr`]: crate::syntax::Expr
 //! [`Visitor`]: crate::visitor::Visitor
 
+#![cfg_attr(all(feature = "bench", test), feature(test))]
+
+#[cfg(all(feature = "bench", test))]
+extern crate test;
+
+#[cfg(all(test, feature = "bench"))]
+mod parse_benches;
 #[cfg(test)]
 mod parse_tests;
 pub mod parser;
