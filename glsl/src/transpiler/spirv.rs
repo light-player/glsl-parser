@@ -75,7 +75,7 @@ pub fn transpile_translation_unit<F>(
   kind: ShaderKind,
 ) -> Result<(), String>
 where
-  F: std::fmt::Write,
+  F: core::fmt::Write,
 {
   // write as GLSL in an intermediate buffer
   let mut glsl_buffer = String::new();

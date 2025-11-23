@@ -1,5 +1,8 @@
 //! Various nom parser helpers.
 
+#[cfg(not(feature = "std"))]
+use alloc::vec;
+
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{anychar, line_ending, multispace1};

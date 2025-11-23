@@ -18,9 +18,15 @@
 //! [`Expr`]: crate::syntax::Expr
 //! [`FunctionDefinition`]: crate::syntax::FunctionDefinition
 
-use std::fmt;
-use std::iter::{once, FromIterator};
-use std::ops::{Deref, DerefMut};
+use core::fmt;
+use core::iter::{once, FromIterator};
+use core::ops::{Deref, DerefMut};
+
+#[cfg(not(feature = "std"))]
+use alloc::{boxed::Box, string::String, vec, vec::Vec};
+
+#[cfg(feature = "std")]
+use std::{boxed::Box, string::String, vec, vec::Vec};
 
 /// A non-empty [`Vec`]. It has at least one element.
 #[derive(Clone, Debug, PartialEq)]
@@ -116,6 +122,7 @@ pub enum IdentifierError {
   ContainsNonASCIIAlphaNum,
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for IdentifierError {}
 
 impl fmt::Display for IdentifierError {
@@ -171,7 +178,7 @@ impl Identifier {
 
 impl<'a> From<&'a str> for Identifier {
   fn from(s: &str) -> Self {
-    Identifier(s.to_owned())
+    Identifier(String::from(s))
   }
 }
 
@@ -215,7 +222,7 @@ impl TypeName {
 
 impl<'a> From<&'a str> for TypeName {
   fn from(s: &str) -> Self {
-    TypeName(s.to_owned())
+    TypeName(String::from(s))
   }
 }
 
@@ -442,7 +449,7 @@ impl ArrayedIdentifier {
 impl<'a> From<&'a str> for ArrayedIdentifier {
   fn from(ident: &str) -> Self {
     ArrayedIdentifier {
-      ident: Identifier(ident.to_owned()),
+      ident: Identifier(String::from(ident)),
       array_spec: None,
     }
   }

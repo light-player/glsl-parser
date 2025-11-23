@@ -16,7 +16,13 @@ use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
 use nom::multi::{fold_many0, many0, many1, separated_list0};
 use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
 use nom::{Err as NomErr, ParseTo};
-use std::num::ParseIntError;
+use core::num::ParseIntError;
+
+#[cfg(not(feature = "std"))]
+use alloc::{boxed::Box, string::String, vec, vec::Vec};
+
+#[cfg(feature = "std")]
+use std::{boxed::Box, string::String, vec::Vec};
 
 pub use self::nom_helpers::ParserResult;
 use self::nom_helpers::{blank_space, cnst, eol, many0_, str_till_eol};
@@ -399,7 +405,7 @@ pub fn float_lit(i: &str) -> ParserResult<f32> {
 
   // if the parsed data is in the accepted form ".394634…", we parse it as if it was < 0
   let n: f32 = if f.as_bytes()[0] == b'.' {
-    let mut f_ = f.to_owned();
+    let mut f_ = String::from(f);
     f_.insert(0, '0');
 
     f_.parse().unwrap()
@@ -421,7 +427,7 @@ pub fn double_lit(i: &str) -> ParserResult<f64> {
 
   // if the parsed data is in the accepted form ".394634…", we parse it as if it was < 0
   let n: f64 = if f.as_bytes()[0] == b'.' {
-    let mut f_ = f.to_owned();
+    let mut f_ = String::from(f);
     f_.insert(0, '0');
     f_.parse().unwrap()
   } else {
@@ -450,7 +456,7 @@ pub fn path_lit(i: &str) -> ParserResult<syntax::Path> {
 pub fn path_lit_absolute(i: &str) -> ParserResult<String> {
   map(
     delimited(char('<'), cut(take_until(">")), cut(char('>'))),
-    |s: &str| s.to_owned(),
+    |s: &str| String::from(s),
   )(i)
 }
 
@@ -458,7 +464,7 @@ pub fn path_lit_absolute(i: &str) -> ParserResult<String> {
 pub fn path_lit_relative(i: &str) -> ParserResult<String> {
   map(
     delimited(char('"'), cut(take_until("\"")), cut(char('"'))),
-    |s: &str| s.to_owned(),
+    |s: &str| String::from(s),
   )(i)
 }
 
@@ -1655,7 +1661,7 @@ pub(crate) fn pp_define_object_like<'a>(
     map(preceded(pp_space0, cut(str_till_eol)), |value| {
       syntax::PreprocessorDefine::ObjectLike {
         ident: ident.clone(),
-        value: value.to_owned(),
+        value: String::from(value),
       }
     })(i)
   }
@@ -1717,7 +1723,7 @@ pub(crate) fn pp_error(i: &str) -> ParserResult<syntax::PreprocessorError> {
   map(
     tuple((terminated(keyword("error"), pp_space0), cut(str_till_eol))),
     |(_, message)| syntax::PreprocessorError {
-      message: message.to_owned(),
+      message: String::from(message),
     },
   )(i)
 }
@@ -1790,7 +1796,7 @@ pub(crate) fn pp_pragma(i: &str) -> ParserResult<syntax::PreprocessorPragma> {
   map(
     tuple((terminated(keyword("pragma"), pp_space0), cut(str_till_eol))),
     |(_, command)| syntax::PreprocessorPragma {
-      command: command.to_owned(),
+      command: String::from(command),
     },
   )(i)
 }

@@ -26,12 +26,18 @@
 //! [`Write`] object. You’re likely to be interested in [`show_translation_unit`] to start with.
 //!
 //! [`Cow<str>`]: std::borrow::Cow
-//! [`Write`]: std::fmt::Write
+//! [`Write`]: core::fmt::Write
 //! [`show_translation_unit`]: crate::transpiler::glsl::show_translation_unit
 //! [`syntax`]: crate::syntax
 //! [`transpiler`]: crate::transpiler
 
-use std::fmt::Write;
+use core::fmt::Write;
+
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+
+#[cfg(feature = "std")]
+use std::vec::Vec;
 
 use crate::syntax;
 
@@ -752,7 +758,9 @@ pub fn show_float<F>(f: &mut F, x: f32)
 where
   F: Write,
 {
-  if x.fract() == 0. {
+  // Check if x is an integer by casting to i32 and back
+  // This works for values that fit in i32 range
+  if x.abs() < (i32::MAX as f32) && (x as i32 as f32) == x {
     let _ = write!(f, "{}.", x);
   } else {
     let _ = write!(f, "{}", x);
@@ -763,7 +771,9 @@ pub fn show_double<F>(f: &mut F, x: f64)
 where
   F: Write,
 {
-  if x.fract() == 0. {
+  // Check if x is an integer by casting to i64 and back
+  // This works for values that fit in i64 range
+  if x.abs() < (i64::MAX as f64) && (x as i64 as f64) == x {
     let _ = write!(f, "{}.lf", x);
   } else {
     let _ = write!(f, "{}lf", x);

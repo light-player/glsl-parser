@@ -12,7 +12,13 @@
 
 use nom::error::convert_error;
 use nom::Err as NomErr;
-use std::fmt;
+use core::fmt;
+
+#[cfg(not(feature = "std"))]
+use alloc::string::String;
+
+#[cfg(feature = "std")]
+use std::string::String;
 
 use crate::parsers::ParserResult;
 use crate::syntax;
@@ -23,6 +29,7 @@ pub struct ParseError {
   pub info: String,
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for ParseError {}
 
 impl fmt::Display for ParseError {
@@ -41,7 +48,7 @@ where
 
     Err(e) => match e {
       NomErr::Incomplete(_) => Err(ParseError {
-        info: "incomplete parser".to_owned(),
+        info: String::from("incomplete parser"),
       }),
 
       NomErr::Error(err) | NomErr::Failure(err) => {

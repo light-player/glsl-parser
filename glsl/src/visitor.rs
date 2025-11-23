@@ -66,6 +66,12 @@
 //! [`Host::visit`]: crate::visitor::Host::visit
 //! [`Visitor`]: crate::visitor::Visitor
 
+#[cfg(not(feature = "std"))]
+use alloc::boxed::Box;
+
+#[cfg(feature = "std")]
+use std::boxed::Box;
+
 use crate::syntax;
 
 /// Visit strategy after having visited an AST node.
@@ -1420,7 +1426,7 @@ make_host_trait!(HostMut, VisitorMut, visit_mut, &mut);
 
 #[cfg(test)]
 mod tests {
-  use std::iter::FromIterator;
+  use core::iter::FromIterator;
 
   use super::*;
   use syntax;
