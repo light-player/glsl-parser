@@ -25,7 +25,7 @@ where
 // End-of-input parser.
 //
 // Yields `()` if the parser is at the end of the input; an error otherwise.
-pub fn eoi(i: &str) -> ParserResult<()> {
+pub fn eoi(i: &str) -> ParserResult<'_, ()> {
   if i.is_empty() {
     Ok((i, ()))
   } else {
@@ -39,7 +39,7 @@ pub fn eoi(i: &str) -> ParserResult<()> {
 //
 // - A newline.
 // - The end of input.
-pub fn eol(i: &str) -> ParserResult<()> {
+pub fn eol(i: &str) -> ParserResult<'_, ()> {
   alt((
     eoi, // this one goes first because it’s very cheap
     value((), line_ending),
@@ -75,7 +75,7 @@ where
 /// This parser accepts the multiline annotation (\) to break the string on several lines.
 ///
 /// Discard any leading newline.
-pub fn str_till_eol(i: &str) -> ParserResult<&str> {
+pub fn str_till_eol(i: &str) -> ParserResult<'_, &str> {
   map(
     recognize(till(alt((value((), tag("\\\n")), value((), anychar))), eol)),
     |i| {
@@ -93,6 +93,6 @@ pub fn str_till_eol(i: &str) -> ParserResult<&str> {
 // This parser succeeds with multispaces and multiline annotation.
 //
 // Taylor Swift loves it.
-pub fn blank_space(i: &str) -> ParserResult<&str> {
+pub fn blank_space(i: &str) -> ParserResult<'_, &str> {
   recognize(many0_(alt((multispace1, tag("\\\n")))))(i)
 }
