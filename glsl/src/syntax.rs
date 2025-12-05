@@ -28,6 +28,48 @@ use alloc::{boxed::Box, string::String, vec, vec::Vec};
 #[cfg(feature = "std")]
 use std::{boxed::Box, string::String, vec, vec::Vec};
 
+/// Source location information
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SourceSpan {
+  /// Byte offset from start of input
+  pub offset: usize,
+  /// Line number (1-indexed)
+  pub line: usize,
+  /// Column number (1-indexed)
+  pub column: usize,
+  /// Length of the span in bytes
+  pub len: usize,
+}
+
+impl SourceSpan {
+  pub fn new(offset: usize, line: usize, column: usize, len: usize) -> Self {
+    Self {
+      offset,
+      line,
+      column,
+      len,
+    }
+  }
+
+  pub fn unknown() -> Self {
+    Self {
+      offset: 0,
+      line: 0,
+      column: 0,
+      len: 0,
+    }
+  }
+
+  pub fn is_unknown(&self) -> bool {
+    self.line == 0 && self.column == 0
+  }
+
+  #[cfg(test)]
+  pub fn dummy() -> Self {
+    Self::unknown()
+  }
+}
+
 /// A non-empty [`Vec`]. It has at least one element.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NonEmpty<T>(pub Vec<T>);
@@ -139,7 +181,10 @@ impl fmt::Display for IdentifierError {
 
 /// A generic identifier.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Identifier(pub String);
+pub struct Identifier {
+  pub name: String,
+  pub span: SourceSpan,
+}
 
 impl Identifier {
   /// Create a new [`Identifier`].
@@ -166,31 +211,40 @@ impl Identifier {
       // check we only have ASCII alphanumeric characters
       Err(IdentifierError::ContainsNonASCIIAlphaNum)
     } else {
-      Ok(Identifier(name))
+      Ok(Identifier {
+        name,
+        span: SourceSpan::unknown(),
+      })
     }
   }
 
   /// Get the string representation of the identifier.
   pub fn as_str(&self) -> &str {
-    &self.0
+    &self.name
   }
 }
 
 impl<'a> From<&'a str> for Identifier {
   fn from(s: &str) -> Self {
-    Identifier(String::from(s))
+    Identifier {
+      name: String::from(s),
+      span: SourceSpan::unknown(),
+    }
   }
 }
 
 impl From<String> for Identifier {
   fn from(s: String) -> Self {
-    Identifier(s)
+    Identifier {
+      name: s,
+      span: SourceSpan::unknown(),
+    }
   }
 }
 
 impl fmt::Display for Identifier {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    self.0.fmt(f)
+    self.name.fmt(f)
   }
 }
 
@@ -210,8 +264,8 @@ impl TypeName {
     N: Into<String>,
   {
     // build as identifier and unwrap into type name
-    let Identifier(tn) = Identifier::new(name)?;
-    Ok(TypeName(tn))
+    let ident = Identifier::new(name)?;
+    Ok(TypeName(ident.name))
   }
 
   /// Get the string representation of the type name.
@@ -449,7 +503,10 @@ impl ArrayedIdentifier {
 impl<'a> From<&'a str> for ArrayedIdentifier {
   fn from(ident: &str) -> Self {
     ArrayedIdentifier {
-      ident: Identifier(String::from(ident)),
+      ident: Identifier {
+        name: String::from(ident),
+        span: SourceSpan::unknown(),
+      },
       array_spec: None,
     }
   }
@@ -692,73 +749,73 @@ impl From<Expr> for Initializer {
 
 /// The most general form of an expression. As you can see if you read the variant list, in GLSL, an
 /// assignment is an expression. This is a bit silly but think of an assignment as a statement first
-/// then an expression which evaluates to what the statement “returns”.
+/// then an expression which evaluates to what the statement "returns".
 ///
 /// An expression is either an assignment or a list (comma) of assignments.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
   /// A variable expression, using an identifier.
-  Variable(Identifier),
+  Variable(Identifier, SourceSpan),
   /// Integral constant expression.
-  IntConst(i32),
+  IntConst(i32, SourceSpan),
   /// Unsigned integral constant expression.
-  UIntConst(u32),
+  UIntConst(u32, SourceSpan),
   /// Boolean constant expression.
-  BoolConst(bool),
+  BoolConst(bool, SourceSpan),
   /// Single precision floating expression.
-  FloatConst(f32),
+  FloatConst(f32, SourceSpan),
   /// Double precision floating expression.
-  DoubleConst(f64),
+  DoubleConst(f64, SourceSpan),
   /// A unary expression, gathering a single expression and a unary operator.
-  Unary(UnaryOp, Box<Expr>),
+  Unary(UnaryOp, Box<Expr>, SourceSpan),
   /// A binary expression, gathering two expressions and a binary operator.
-  Binary(BinaryOp, Box<Expr>, Box<Expr>),
+  Binary(BinaryOp, Box<Expr>, Box<Expr>, SourceSpan),
   /// A ternary conditional expression, gathering three expressions.
-  Ternary(Box<Expr>, Box<Expr>, Box<Expr>),
+  Ternary(Box<Expr>, Box<Expr>, Box<Expr>, SourceSpan),
   /// An assignment is also an expression. Gathers an expression that defines what to assign to, an
   /// assignment operator and the value to associate with.
-  Assignment(Box<Expr>, AssignmentOp, Box<Expr>),
+  Assignment(Box<Expr>, AssignmentOp, Box<Expr>, SourceSpan),
   /// Add an array specifier to an expression.
-  Bracket(Box<Expr>, ArraySpecifier),
+  Bracket(Box<Expr>, ArraySpecifier, SourceSpan),
   /// A functional call. It has a function identifier and a list of expressions (arguments).
-  FunCall(FunIdentifier, Vec<Expr>),
+  FunCall(FunIdentifier, Vec<Expr>, SourceSpan),
   /// An expression associated with a field selection (struct).
-  Dot(Box<Expr>, Identifier),
+  Dot(Box<Expr>, Identifier, SourceSpan),
   /// Post-incrementation of an expression.
-  PostInc(Box<Expr>),
+  PostInc(Box<Expr>, SourceSpan),
   /// Post-decrementation of an expression.
-  PostDec(Box<Expr>),
+  PostDec(Box<Expr>, SourceSpan),
   /// An expression that contains several, separated with comma.
-  Comma(Box<Expr>, Box<Expr>),
+  Comma(Box<Expr>, Box<Expr>, SourceSpan),
 }
 
 impl From<i32> for Expr {
   fn from(x: i32) -> Expr {
-    Expr::IntConst(x)
+    Expr::IntConst(x, SourceSpan::unknown())
   }
 }
 
 impl From<u32> for Expr {
   fn from(x: u32) -> Expr {
-    Expr::UIntConst(x)
+    Expr::UIntConst(x, SourceSpan::unknown())
   }
 }
 
 impl From<bool> for Expr {
   fn from(x: bool) -> Expr {
-    Expr::BoolConst(x)
+    Expr::BoolConst(x, SourceSpan::unknown())
   }
 }
 
 impl From<f32> for Expr {
   fn from(x: f32) -> Expr {
-    Expr::FloatConst(x)
+    Expr::FloatConst(x, SourceSpan::unknown())
   }
 }
 
 impl From<f64> for Expr {
   fn from(x: f64) -> Expr {
-    Expr::DoubleConst(x)
+    Expr::DoubleConst(x, SourceSpan::unknown())
   }
 }
 
@@ -902,6 +959,7 @@ impl ExternalDeclaration {
       statement: CompoundStatement {
         statement_list: body.into_iter().collect(),
       },
+      span: SourceSpan::unknown(),
     })
   }
 
@@ -949,6 +1007,7 @@ impl ExternalDeclaration {
 pub struct FunctionDefinition {
   pub prototype: FunctionPrototype,
   pub statement: CompoundStatement,
+  pub span: SourceSpan,
 }
 
 /// Compound statement (with no new scope).

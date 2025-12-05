@@ -50,23 +50,23 @@ impl HasPrecedence for syntax::Expr {
   fn precedence(&self) -> u32 {
     match self {
       // 0 isn't a valid precedence, but we use this to represent atomic expressions
-      Self::Variable(_)
-      | Self::IntConst(_)
-      | Self::UIntConst(_)
-      | Self::BoolConst(_)
-      | Self::FloatConst(_)
-      | Self::DoubleConst(_) => 0,
+      Self::Variable(_, _)
+      | Self::IntConst(_, _)
+      | Self::UIntConst(_, _)
+      | Self::BoolConst(_, _)
+      | Self::FloatConst(_, _)
+      | Self::DoubleConst(_, _) => 0,
       // Precedence operator expression is precedence of operator
-      Self::Unary(op, _) => op.precedence(),
-      Self::Binary(op, _, _) => op.precedence(),
-      Self::Ternary(_, _, _) => 15,
-      Self::Assignment(_, op, _) => op.precedence(),
-      Self::Bracket(_, _)
-      | Self::FunCall(_, _)
-      | Self::Dot(_, _)
-      | Self::PostInc(_)
-      | Self::PostDec(_) => 2,
-      Self::Comma(_, _) => 17,
+      Self::Unary(op, _, _) => op.precedence(),
+      Self::Binary(op, _, _, _) => op.precedence(),
+      Self::Ternary(_, _, _, _) => 15,
+      Self::Assignment(_, op, _, _) => op.precedence(),
+      Self::Bracket(_, _, _)
+      | Self::FunCall(_, _, _)
+      | Self::Dot(_, _, _)
+      | Self::PostInc(_, _)
+      | Self::PostDec(_, _) => 2,
+      Self::Comma(_, _, _) => 17,
     }
   }
 }
@@ -105,7 +105,7 @@ pub fn show_identifier<F>(f: &mut F, i: &syntax::Identifier)
 where
   F: Write,
 {
-  let _ = f.write_str(&i.0);
+  let _ = f.write_str(&i.name);
 }
 
 pub fn show_type_name<F>(f: &mut F, t: &syntax::TypeName)
@@ -785,19 +785,19 @@ where
   F: Write,
 {
   match *expr {
-    syntax::Expr::Variable(ref i) => show_identifier(f, &i),
-    syntax::Expr::IntConst(ref x) => {
+    syntax::Expr::Variable(ref i, _) => show_identifier(f, &i),
+    syntax::Expr::IntConst(ref x, _) => {
       let _ = write!(f, "{}", x);
     }
-    syntax::Expr::UIntConst(ref x) => {
+    syntax::Expr::UIntConst(ref x, _) => {
       let _ = write!(f, "{}u", x);
     }
-    syntax::Expr::BoolConst(ref x) => {
+    syntax::Expr::BoolConst(ref x, _) => {
       let _ = write!(f, "{}", x);
     }
-    syntax::Expr::FloatConst(ref x) => show_float(f, *x),
-    syntax::Expr::DoubleConst(ref x) => show_double(f, *x),
-    syntax::Expr::Unary(ref op, ref e) => {
+    syntax::Expr::FloatConst(ref x, _) => show_float(f, *x),
+    syntax::Expr::DoubleConst(ref x, _) => show_double(f, *x),
+    syntax::Expr::Unary(ref op, ref e, _) => {
       // Note: all unary ops are right-to-left associative
       show_unary_op(f, &op);
 
@@ -805,7 +805,7 @@ where
         let _ = f.write_str("(");
         show_expr(f, &e);
         let _ = f.write_str(")");
-      } else if let syntax::Expr::Unary(eop, _) = &**e {
+      } else if let syntax::Expr::Unary(eop, _, _) = &**e {
         // Prevent double-unary plus/minus turning into inc/dec
         if eop == op && (*eop == syntax::UnaryOp::Add || *eop == syntax::UnaryOp::Minus) {
           let _ = f.write_str("(");
@@ -818,7 +818,7 @@ where
         show_expr(f, &e);
       }
     }
-    syntax::Expr::Binary(ref op, ref l, ref r) => {
+    syntax::Expr::Binary(ref op, ref l, ref r, _) => {
       // Note: all binary ops are left-to-right associative (<= for left part)
 
       if l.precedence() <= op.precedence() {
@@ -839,7 +839,7 @@ where
         let _ = f.write_str(")");
       }
     }
-    syntax::Expr::Ternary(ref c, ref s, ref e) => {
+    syntax::Expr::Ternary(ref c, ref s, ref e, _) => {
       // Note: ternary is right-to-left associative (<= for right part)
 
       if c.precedence() < expr.precedence() {
@@ -860,7 +860,7 @@ where
         let _ = f.write_str(")");
       }
     }
-    syntax::Expr::Assignment(ref v, ref op, ref e) => {
+    syntax::Expr::Assignment(ref v, ref op, ref e, _) => {
       // Note: all assignment ops are right-to-left associative
 
       if v.precedence() < op.precedence() {
@@ -883,7 +883,7 @@ where
         let _ = f.write_str(")");
       }
     }
-    syntax::Expr::Bracket(ref e, ref a) => {
+    syntax::Expr::Bracket(ref e, ref a, _) => {
       // Note: bracket is left-to-right associative
 
       if e.precedence() <= expr.precedence() {
@@ -896,7 +896,7 @@ where
 
       show_array_spec(f, &a);
     }
-    syntax::Expr::FunCall(ref fun, ref args) => {
+    syntax::Expr::FunCall(ref fun, ref args, _) => {
       show_function_identifier(f, &fun);
       let _ = f.write_str("(");
 
@@ -913,7 +913,7 @@ where
 
       let _ = f.write_str(")");
     }
-    syntax::Expr::Dot(ref e, ref i) => {
+    syntax::Expr::Dot(ref e, ref i, _) => {
       // Note: dot is left-to-right associative
 
       if e.precedence() <= expr.precedence() {
@@ -926,7 +926,7 @@ where
       let _ = f.write_str(".");
       show_identifier(f, &i);
     }
-    syntax::Expr::PostInc(ref e) => {
+    syntax::Expr::PostInc(ref e, _) => {
       // Note: post-increment is right-to-left associative
 
       if e.precedence() < expr.precedence() {
@@ -939,7 +939,7 @@ where
 
       let _ = f.write_str("++");
     }
-    syntax::Expr::PostDec(ref e) => {
+    syntax::Expr::PostDec(ref e, _) => {
       // Note: post-decrement is right-to-left associative
 
       if e.precedence() < expr.precedence() {
@@ -952,7 +952,7 @@ where
 
       let _ = f.write_str("--");
     }
-    syntax::Expr::Comma(ref a, ref b) => {
+    syntax::Expr::Comma(ref a, ref b, _) => {
       // Note: comma is left-to-right associative
 
       if a.precedence() <= expr.precedence() {
@@ -1755,7 +1755,17 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::parsers::expr;
+  use crate::parsers::{expr, function_definition, iteration_statement, Span};
+
+  // Helper to convert &str to Span for testing
+  fn span(s: &str) -> Span {
+    Span::new(s)
+  }
+
+  // Helper to extract the result from SpanResult for testing
+  fn extract_result<T>((remaining, result): (Span, T)) -> (&str, T) {
+    (remaining.fragment(), result)
+  }
 
   fn to_string(e: &syntax::Expr) -> String {
     let mut s = String::new();
@@ -1765,30 +1775,30 @@ mod tests {
 
   #[test]
   fn unary_parentheses() {
-    assert_eq!(to_string(&expr("-a").unwrap().1), "-a");
-    assert_eq!(to_string(&expr("-(a + b)").unwrap().1), "-(a+b)");
-    assert_eq!(to_string(&expr("-a.x").unwrap().1), "-a.x");
+    assert_eq!(to_string(&expr(span("-a")).map(extract_result).unwrap().1), "-a");
+    assert_eq!(to_string(&expr(span("-(a + b)")).map(extract_result).unwrap().1), "-(a+b)");
+    assert_eq!(to_string(&expr(span("-a.x")).map(extract_result).unwrap().1), "-a.x");
 
-    assert_eq!(to_string(&expr("-(-a)").unwrap().1), "-(-a)");
-    assert_eq!(to_string(&expr("+(+a)").unwrap().1), "+(+a)");
-    assert_eq!(to_string(&expr("~~a").unwrap().1), "~~a");
-    assert_eq!(to_string(&expr("--a").unwrap().1), "--a");
-    assert_eq!(to_string(&expr("++a").unwrap().1), "++a");
-    assert_eq!(to_string(&expr("+-a").unwrap().1), "+-a");
+    assert_eq!(to_string(&expr(span("-(-a)")).map(extract_result).unwrap().1), "-(-a)");
+    assert_eq!(to_string(&expr(span("+(+a)")).map(extract_result).unwrap().1), "+(+a)");
+    assert_eq!(to_string(&expr(span("~~a")).map(extract_result).unwrap().1), "~~a");
+    assert_eq!(to_string(&expr(span("--a")).map(extract_result).unwrap().1), "--a");
+    assert_eq!(to_string(&expr(span("++a")).map(extract_result).unwrap().1), "++a");
+    assert_eq!(to_string(&expr(span("+-a")).map(extract_result).unwrap().1), "+-a");
   }
 
   #[test]
   fn binary_parentheses() {
-    assert_eq!(to_string(&expr("a + b").unwrap().1), "a+b");
-    assert_eq!(to_string(&expr("a * b + c").unwrap().1), "a*b+c");
-    assert_eq!(to_string(&expr("(a + b) * c").unwrap().1), "(a+b)*c");
-    assert_eq!(to_string(&expr("a + (b * c)").unwrap().1), "a+b*c");
-    assert_eq!(to_string(&expr("a * (b + c)").unwrap().1), "a*(b+c)");
-    assert_eq!(to_string(&expr("(a * b) * c").unwrap().1), "a*b*c");
-    assert_eq!(to_string(&expr("a * (b * c)").unwrap().1), "a*(b*c)");
-    assert_eq!(to_string(&expr("a&&b&&c").unwrap().1), "a&&b&&c");
+    assert_eq!(to_string(&expr(span("a + b")).map(extract_result).unwrap().1), "a+b");
+    assert_eq!(to_string(&expr(span("a * b + c")).map(extract_result).unwrap().1), "a*b+c");
+    assert_eq!(to_string(&expr(span("(a + b) * c")).map(extract_result).unwrap().1), "(a+b)*c");
+    assert_eq!(to_string(&expr(span("a + (b * c)")).map(extract_result).unwrap().1), "a+b*c");
+    assert_eq!(to_string(&expr(span("a * (b + c)")).map(extract_result).unwrap().1), "a*(b+c)");
+    assert_eq!(to_string(&expr(span("(a * b) * c")).map(extract_result).unwrap().1), "a*b*c");
+    assert_eq!(to_string(&expr(span("a * (b * c)")).map(extract_result).unwrap().1), "a*(b*c)");
+    assert_eq!(to_string(&expr(span("a&&b&&c")).map(extract_result).unwrap().1), "a&&b&&c");
     assert_eq!(
-      to_string(&expr("n - p > 0. && u.y < n && u.y > p").unwrap().1),
+      to_string(&expr(span("n - p > 0. && u.y < n && u.y > p")).map(extract_result).unwrap().1),
       "n-p>0.&&u.y<n&&u.y>p"
     );
   }
@@ -1796,25 +1806,25 @@ mod tests {
   #[test]
   fn ternary_parentheses() {
     assert_eq!(
-      to_string(&expr("a ? b : c ? d : e").unwrap().1),
+      to_string(&expr(span("a ? b : c ? d : e")).map(extract_result).unwrap().1),
       "a ? b : c ? d : e"
     );
     assert_eq!(
-      to_string(&expr("(a ? b : c) ? d : e").unwrap().1),
+      to_string(&expr(span("(a ? b : c) ? d : e")).map(extract_result).unwrap().1),
       "(a ? b : c) ? d : e"
     );
   }
 
   #[test]
   fn assignment_parentheses() {
-    assert_eq!(to_string(&expr("a = b = c").unwrap().1), "a = b = c");
-    assert_eq!(to_string(&expr("(a = b) = c").unwrap().1), "(a = b) = c");
+    assert_eq!(to_string(&expr(span("a = b = c")).map(extract_result).unwrap().1), "a = b = c");
+    assert_eq!(to_string(&expr(span("(a = b) = c")).map(extract_result).unwrap().1), "(a = b) = c");
   }
 
   #[test]
   fn dot_parentheses() {
-    assert_eq!(to_string(&expr("a.x").unwrap().1), "a.x");
-    assert_eq!(to_string(&expr("(a + b).x").unwrap().1), "(a+b).x");
+    assert_eq!(to_string(&expr(span("a.x")).map(extract_result).unwrap().1), "a.x");
+    assert_eq!(to_string(&expr(span("(a + b).x")).map(extract_result).unwrap().1), "(a+b).x");
   }
 
   #[test]
@@ -1845,39 +1855,46 @@ return u;
 "#;
 
     let mut s = String::new();
-    show_function_definition(&mut s, &function_definition(SRC).unwrap().1);
+    show_function_definition(&mut s, &function_definition(span(SRC)).map(extract_result).unwrap().1);
 
     assert_eq!(s, DST);
   }
 
   #[test]
   fn roundtrip_glsl_complex_expr() {
-    let zero = syntax::Expr::DoubleConst(0.);
-    let ray = syntax::Expr::Variable("ray".into());
-    let raydir = syntax::Expr::Dot(Box::new(ray), "dir".into());
+    let zero = syntax::Expr::DoubleConst(0., syntax::SourceSpan::dummy());
+    let ray = syntax::Expr::Variable("ray".into(), syntax::SourceSpan::dummy());
+    let raydir = syntax::Expr::Dot(Box::new(ray), "dir".into(), syntax::SourceSpan::dummy());
     let vec4 = syntax::Expr::FunCall(
       syntax::FunIdentifier::Identifier("vec4".into()),
       vec![raydir, zero],
+      syntax::SourceSpan::dummy(),
     );
-    let view = syntax::Expr::Variable("view".into());
+    let view = syntax::Expr::Variable("view".into(), syntax::SourceSpan::dummy());
     let iview = syntax::Expr::FunCall(
       syntax::FunIdentifier::Identifier("inverse".into()),
       vec![view],
+      syntax::SourceSpan::dummy(),
     );
-    let mul = syntax::Expr::Binary(syntax::BinaryOp::Mult, Box::new(iview), Box::new(vec4));
-    let xyz = syntax::Expr::Dot(Box::new(mul), "xyz".into());
+    let mul = syntax::Expr::Binary(syntax::BinaryOp::Mult, Box::new(iview), Box::new(vec4), syntax::SourceSpan::dummy());
+    let xyz = syntax::Expr::Dot(Box::new(mul), "xyz".into(), syntax::SourceSpan::dummy());
     let input = syntax::Expr::FunCall(
       syntax::FunIdentifier::Identifier("normalize".into()),
       vec![xyz],
+      syntax::SourceSpan::dummy(),
     );
 
     let mut output = String::new();
     show_expr(&mut output, &input);
     let _ = output.write_str(";");
 
-    let back = expr(&output);
+    let back = expr(span(&output)).map(extract_result);
+    let mut normalized_back = back.clone();
+    if let Ok((_, ref mut expr)) = normalized_back {
+      crate::parse_tests::normalize_spans_in_expr(expr);
+    }
 
-    assert_eq!(back, Ok((";", input)), "intermediate source '{}'", output);
+    assert_eq!(normalized_back, Ok((";", input)), "intermediate source '{}'", output);
   }
 
   #[test]
@@ -1891,7 +1908,7 @@ a();
 "#;
 
     let mut s = String::new();
-    show_iteration_statement(&mut s, &iteration_statement(SRC).unwrap().1);
+    show_iteration_statement(&mut s, &iteration_statement(span(SRC)).map(extract_result).unwrap().1);
 
     assert_eq!(s, SRC);
   }
@@ -1907,7 +1924,7 @@ a();
 "#;
 
     let mut s = String::new();
-    show_iteration_statement(&mut s, &iteration_statement(SRC).unwrap().1);
+    show_iteration_statement(&mut s, &iteration_statement(span(SRC)).map(extract_result).unwrap().1);
 
     assert_eq!(s, SRC);
   }
@@ -1922,7 +1939,7 @@ a();
 "#;
 
     let mut s = String::new();
-    show_iteration_statement(&mut s, &iteration_statement(SRC).unwrap().1);
+    show_iteration_statement(&mut s, &iteration_statement(span(SRC)).map(extract_result).unwrap().1);
 
     assert_eq!(s, SRC);
   }

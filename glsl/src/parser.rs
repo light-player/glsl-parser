@@ -10,9 +10,9 @@
 //! [`Parse`]: crate::parser::Parse
 //! [`ParseError`]: crate::parser::ParseError
 
-use nom::error::convert_error;
-use nom::Err as NomErr;
 use core::fmt;
+use nom::error::{convert_error, VerboseError};
+use nom::Err as NomErr;
 
 #[cfg(not(feature = "std"))]
 use alloc::string::String;
@@ -20,13 +20,14 @@ use alloc::string::String;
 #[cfg(feature = "std")]
 use std::string::String;
 
-use crate::parsers::ParserResult;
+use crate::parsers::{Span, SpanResult, to_source_span};
 use crate::syntax;
 
 /// A parse error. It contains a [`String`] giving information on the reason why the parser failed.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ParseError {
   pub info: String,
+  pub span: Option<crate::syntax::SourceSpan>,
 }
 
 #[cfg(feature = "std")]
@@ -41,19 +42,36 @@ impl fmt::Display for ParseError {
 /// Run a parser `P` on a given `[&str`] input.
 pub(crate) fn run_parser<P, T>(source: &str, parser: P) -> Result<T, ParseError>
 where
-  P: FnOnce(&str) -> ParserResult<T>,
+  P: FnOnce(Span) -> SpanResult<T>,
 {
-  match parser(source) {
+  let span = Span::new(source);
+  match parser(span) {
     Ok((_, x)) => Ok(x),
 
     Err(e) => match e {
       NomErr::Incomplete(_) => Err(ParseError {
         info: String::from("incomplete parser"),
+        span: None,
       }),
 
       NomErr::Error(err) | NomErr::Failure(err) => {
-        let info = convert_error(source, err);
-        Err(ParseError { info })
+        // Convert VerboseError<Span> to VerboseError<&str> for convert_error
+        let err_str = VerboseError {
+          errors: err
+            .errors
+            .iter()
+            .map(|(span, kind)| {
+              let fragment: &str = span.fragment();
+              (fragment, kind.clone())
+            })
+            .collect(),
+        };
+        let info = convert_error(source, err_str);
+        // Extract span from error if available
+        let error_span = err.errors.first().map(|(span, _)| {
+          to_source_span(*span, 1)
+        });
+        Err(ParseError { info, span: error_span })
       }
     },
   }

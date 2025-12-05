@@ -35,20 +35,24 @@ fn left_associativity() {
         statement: syntax::CompoundStatement {
           statement_list: vec![syntax::Statement::Simple(Box::new(
             syntax::SimpleStatement::Expression(Some(syntax::Expr::Assignment(
-              Box::new(syntax::Expr::Variable("x".into())),
+              Box::new(syntax::Expr::Variable("x".into(), syntax::SourceSpan::unknown())),
               syntax::AssignmentOp::Equal,
               Box::new(syntax::Expr::Binary(
                 opname.clone(),
                 Box::new(syntax::Expr::Binary(
                   opname.clone(),
-                  Box::new(syntax::Expr::Variable("a".into())),
-                  Box::new(syntax::Expr::Variable("b".into())),
+                  Box::new(syntax::Expr::Variable("a".into(), syntax::SourceSpan::unknown())),
+                  Box::new(syntax::Expr::Variable("b".into(), syntax::SourceSpan::unknown())),
+                  syntax::SourceSpan::unknown(),
                 )),
-                Box::new(syntax::Expr::Variable("c".into())),
+                Box::new(syntax::Expr::Variable("c".into(), syntax::SourceSpan::unknown())),
+                syntax::SourceSpan::unknown(),
               )),
+              syntax::SourceSpan::unknown(),
             ))),
           ))],
         },
+        span: syntax::SourceSpan::unknown(),
       }),
     ])
     .unwrap();

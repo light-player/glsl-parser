@@ -1014,37 +1014,37 @@ macro_rules! make_host_trait {
 
         if visit == Visit::Children {
           match self {
-            syntax::Expr::Variable(ident) => ident.$mthd_name(visitor),
+            syntax::Expr::Variable(ident, _) => ident.$mthd_name(visitor),
 
-            syntax::Expr::Unary(op, e) => {
+            syntax::Expr::Unary(op, e, _) => {
               op.$mthd_name(visitor);
               e.$mthd_name(visitor);
             }
 
-            syntax::Expr::Binary(op, a, b) => {
+            syntax::Expr::Binary(op, a, b, _) => {
               op.$mthd_name(visitor);
               a.$mthd_name(visitor);
               b.$mthd_name(visitor);
             }
 
-            syntax::Expr::Ternary(a, b, c) => {
+            syntax::Expr::Ternary(a, b, c, _) => {
               a.$mthd_name(visitor);
               b.$mthd_name(visitor);
               c.$mthd_name(visitor);
             }
 
-            syntax::Expr::Assignment(lhs, op, rhs) => {
+            syntax::Expr::Assignment(lhs, op, rhs, _) => {
               lhs.$mthd_name(visitor);
               op.$mthd_name(visitor);
               rhs.$mthd_name(visitor);
             }
 
-            syntax::Expr::Bracket(e, arr_spec) => {
+            syntax::Expr::Bracket(e, arr_spec, _) => {
               e.$mthd_name(visitor);
               arr_spec.$mthd_name(visitor);
             }
 
-            syntax::Expr::FunCall(fi, params) => {
+            syntax::Expr::FunCall(fi, params, _) => {
               fi.$mthd_name(visitor);
 
               for param in params {
@@ -1052,16 +1052,16 @@ macro_rules! make_host_trait {
               }
             }
 
-            syntax::Expr::Dot(e, i) => {
+            syntax::Expr::Dot(e, i, _) => {
               e.$mthd_name(visitor);
               i.$mthd_name(visitor);
             }
 
-            syntax::Expr::PostInc(e) => e.$mthd_name(visitor),
+            syntax::Expr::PostInc(e, _) => e.$mthd_name(visitor),
 
-            syntax::Expr::PostDec(e) => e.$mthd_name(visitor),
+            syntax::Expr::PostDec(e, _) => e.$mthd_name(visitor),
 
-            syntax::Expr::Comma(a, b) => {
+            syntax::Expr::Comma(a, b, _) => {
               a.$mthd_name(visitor);
               b.$mthd_name(visitor);
             }
