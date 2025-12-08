@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+use alloc::{borrow::ToOwned, boxed::Box, string::String, vec, vec::Vec};
+
 use crate::parsers::*;
 use crate::syntax;
 

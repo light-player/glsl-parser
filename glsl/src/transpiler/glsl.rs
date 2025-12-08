@@ -34,7 +34,7 @@
 use core::fmt::Write;
 
 #[cfg(not(feature = "std"))]
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 #[cfg(feature = "std")]
 use std::vec::Vec;
@@ -1754,6 +1754,9 @@ where
 
 #[cfg(test)]
 mod tests {
+  #[cfg(not(feature = "std"))]
+  use alloc::{boxed::Box, string::String};
+
   use super::*;
   use crate::parsers::{expr, function_definition, iteration_statement, Span};
 

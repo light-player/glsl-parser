@@ -67,7 +67,7 @@
 //! [`Visitor`]: crate::visitor::Visitor
 
 #[cfg(not(feature = "std"))]
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec};
 
 #[cfg(feature = "std")]
 use std::boxed::Box;

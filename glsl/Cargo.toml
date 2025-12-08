@@ -16,11 +16,11 @@ rust-version = "1.73"
 
 [features]
 default = ["std"]
-std = ["nom/std"]
+std = ["nom/std", "nom_locate/std"]
 spirv = ["shaderc"]
 bench = []
 
 [dependencies]
 nom = { version = "7", default-features = false, features = ["alloc"] }
-nom_locate = "4.2"
+nom_locate = { version = "4.2", default-features = false, features = ["alloc"] }
 shaderc = { version = ">=0.6, <0.9", optional = true }
