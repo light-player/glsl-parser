@@ -1684,8 +1684,8 @@ pub fn jump_statement_return(i: Span) -> SpanResult<'_, syntax::JumpStatement> {
 /// Parse a condition.
 pub fn condition(i: Span) -> SpanResult<'_, syntax::Condition> {
   alt((
-    map(expr, |e| syntax::Condition::Expr(Box::new(e))),
     condition_assignment,
+    map(expr, |e| syntax::Condition::Expr(Box::new(e))),
   ))(i)
 }
 

@@ -2749,6 +2749,28 @@ fn parse_iteration_statement_do_while_empty() {
 }
 
 #[test]
+fn parse_iteration_statement_while_condition_declaration() {
+  let cond = syntax::Condition::Assignment(
+    syntax::FullySpecifiedType::new(syntax::TypeSpecifierNonArray::Bool),
+    "j".into(),
+    syntax::Initializer::Simple(Box::new(syntax::Expr::Binary(
+      syntax::BinaryOp::LT,
+      Box::new(syntax::Expr::Variable("i".into(), syntax::SourceSpan::dummy())),
+      Box::new(syntax::Expr::IntConst(3, syntax::SourceSpan::dummy())),
+      syntax::SourceSpan::dummy(),
+    ))),
+  );
+  let st = syntax::Statement::Compound(Box::new(syntax::CompoundStatement {
+    statement_list: Vec::new(),
+  }));
+  let expected = syntax::IterationStatement::While(cond, Box::new(st));
+
+  let (remaining, mut result) = iteration_statement(span("while (bool j = i < 3) {}")).map(extract_result).unwrap();
+  normalize_spans_in_iteration_statement(&mut result);
+  assert_eq!((remaining, result), ("", expected));
+}
+
+#[test]
 fn parse_iteration_statement_for_empty() {
   let init = syntax::ForInitStatement::Declaration(Box::new(
     syntax::Declaration::InitDeclaratorList(syntax::InitDeclaratorList {
